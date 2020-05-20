@@ -156,17 +156,163 @@ function beforeAttributeValue (char) {
 }
 
 // 进入双引号属性值状态
-function doubleQuotedAttributeValue (char) {}
+// 遇到回引号，当前属性值统计完成，进入引号属性值后状态
+// 遇到特殊字符，暂不处理
+// 遇到常规字符，统计属性值，继续进入当前双引号属性值状态
+function doubleQuotedAttributeValue (char) {
+  if (char === '"') {
+    currentToken(currentAttribute.name) = currentAttribute.value
+    return afterQuotedAttributeValue
+  }
+
+  if (char === '\u0000') {
+
+  } else if (char === EOF) {
+
+  } else {
+    currentAttribute.value += char
+    return doubleQuotedAttributeValue
+  }
+}
 
 // 进入单引号属性值状态
-function singleQuotedAttributeValue (char) {}
+// 遇到单引号，当前属性值统计完成，进入引号属性值后状态
+// 遇到特殊字符，暂不处理
+// 遇到普通字符，统计属性值，继续进入单引号属性值状态
+function singleQuotedAttributeValue (char) {
+  if (char === '\'') {
+    currentToken[currentAttribute.name] = currentAttribute.value
+    return afterQuotedAttributeValue
+  }
+
+  if (char === '\u0000') {
+
+  } else if (char === EOF) {
+
+  } else {
+    currentAttribute.value += char
+    return singleQuotedAttributeValue
+  }
+}
 
 // 进入无引号属性值状态
-function unquotedAttributeValue (char) {}
+// 遇到空格、回车、换行，当前属性值统计完毕，进入属性名前状态
+// 遇到‘/’，当前属性值统计完成，进入自封闭标签开始状态
+// 遇到‘>’，当前属性统计完成，当前标签统计完成，重新进入开始状态data
+// 遇到‘"’，‘’’，‘<’，‘=’，‘`’时，暂不处理
+// 遇到EOF时，暂不处理
+// 遇到正常字符，统计属性值，继续进入无字符属性值状态
+function unquotedAttributeValue (char) {
+  if (char.match(/^[\t\n\f ]$/)) {
+    currentToken(currentAttribute.name) = currentAttribute.value
+    return beforeAttributeName
+  }
+
+  if (char === '/') {
+    currentToken[currentAttribute.name] = currentAttribute.value
+    return selfClosingStartTag
+  }
+
+  if (char === '>') {
+    currentToken[currentAttribute.name] = currentAttribute.value
+    emit(currentToken)
+    return data
+  }
+
+  if (char === '\u0000') {
+
+  } else if (char === '"' || char === '\'' || char === '<' || char === '=' || char === '`') {
+
+  } else if (char === EOF) {
+
+  } else {
+    currentAttribute.value += char
+    return unquotedAttributeValue
+  }
+}
+
+// 进入引号属性值后状态
+// 遇到空格、回车、换行符，进入属性名前状态
+// 遇到‘/’，进入自封闭标签开始状态
+// 遇到‘>’，当前属性值统计完成，当前标签统计完成，重新进入开始状态data
+// 遇到EOF，暂不处理
+// 遇到正常字符，继续统计属性值，进入双引号属性值状态
+function afterQuotedAttributeValue (char) {
+  if (char.match(/^[\t\n\f ]$/)) {
+    return beforeAttributeName
+  }
+
+  if (char === '/') {
+    return selfClosingStartTag
+  }
+
+  if (char === '>') {
+    currentToken[currentAttribute.name] = currentAttribute.value
+    emit(currentToken)
+    return data
+  }
+
+  if (char === EOF) {
+
+  } else {
+    currentAttribute.value += char
+    // 此处存在重大疑问，为啥进入双引号属性值状态
+    return doubleQuotedAttributeValue
+  }
+}
+
+// 进入自封闭标签开始前状态
+// 遇到‘>’，当前标签统计完成，增加自封闭标志位，重新进入开始状态
+// 其他字符，暂不处理
+function selfClosingStartTag (char) {
+  if (char === '>') {
+    currentToken.isSelfClosing = true
+    emit(currentToken)
+    return data
+  }
+
+  if (char === EOF) {
+
+  } else {
+
+  }
+}
 
 // 进入属性名后状态
+// 遇到空格、回车、换行符，继续进入属性名后状态
+// 遇到‘/’，进入自封闭标签开始状态
+// 遇到‘=’，进入属性值前状态
+// 遇到‘>’，当前属性名统计完成，当前标签统计完成，重新进入开始状态data
+// 遇到EOF，暂不处理
+// 遇到正常字符，当前属性名统计完成，遇到新的属性名，进入属性名状态
 function afterAttributeName (char) {
+  if (char.match(/^[\t\n\f ]$/)) {
+    return afterAttributeName
+  }
 
+  if (char === '/') {
+    return selfClosingStartTag
+  }
+
+  if (char === '=') {
+    return beforeAttributeValue
+  }
+
+  if (char === '>') {
+    currentToken[currentAttribute.name] = currentAttribute.value
+    emit(currentToken)
+    return data
+  }
+
+  if (char === EOF) {
+    currentToken[currentAttribute.name] = currentAttribute.value
+    currentAttribute = {
+      name: '',
+      value
+    }
+
+    return attributeName(char)
+  }
 }
 
 // 进入结束标签状态
