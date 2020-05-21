@@ -291,13 +291,117 @@ function afterQuotedAttributeValue (char) {
 }
 
 // 进入无引号属性值统计状态
-function unquotedAttributeValue (char) {}
+// 遇到空格、回车、换行符，当前属性值统计完成，进入属性名前状态
+// 遇到‘/’，当前属性值统计完成，进入自封闭标签开始状态
+// 遇到‘>’，当前属性值统计完成，当前标签统计完成，重新进入开始状态data
+// 遇到单双引号，‘<’，‘=’，‘`’，暂不处理
+// 遇到EOF，暂不处理
+// 遇到正常字符，继续统计属性值
+function unquotedAttributeValue (char) {
+  if (char.match(/^[\t\n\f ]$/)) {
+    currentToken[currentAttribute.name] = currentAttribute.value
+    return beforeAttributeName
+  }
+
+  if (char === '/') {
+    currentToken[currentAttribute.name] = currentAttribute.value
+    return selfClosingStartTag
+  }
+
+  if (char === '>') {
+    currentToken[currentAttribute.name] = currentAttribute.value
+    emit(currentToken)
+    return data
+  }
+
+  if (char === '"' || char === '\'' || char === '=' || char === '<' || char === '`') {
+    return
+  }
+
+  if (char === EOF) {
+    return
+  }
+
+  currentAttribute.value += char
+  return unquotedAttributeValue
+}
+
+// 自封闭标签开始状态
+// 遇到‘>‘，当前标签统计完成，进入开始状态data
+// 其他状态不处理
+function selfClosingStartTag (char) {
+  if (char === '>') {
+    currentToken.isSelfClosing = true
+    emit(currentToken)
+    return data
+  }
+
+  if (char === EOF) {
+    return
+  }
+
+  return
+}
 
 // 进入属性名后状态
-function afterAttributeName (char) {}
+// 遇到空格、回车、换行符，继续进入标签名后状态
+// 遇到’/‘，进入自封闭标签开始状态
+// 遇到’=‘，进入属性值前状态
+// 遇到’>‘，当前属性值统计完成，当前标签统计完成，重新进入开始状态data
+// 遇到EOF，不处理
+// 遇到正常字符，当前属性统计完成，进入属性名统计状态
+function afterAttributeName (char) {
+  if (char.match(/^[\t\n\f ]$/)) {
+    return afterAttributeName
+  }
+
+  if (char === '/') {
+    // 这里是否需要加上这一句？不用，在自封闭标签开始状态里会处理
+    // currentToken[currentAttribute.name] = currentAttribute.value
+    return selfClosingStartTag
+  }
+
+  if (char === '=') {
+    return beforeAttributeValue
+  }
+
+  if (char === '>') {
+    currentToken[currentAttribute.name] = currentAttribute.value
+    emit(currentToken)
+    return data
+  }
+
+  if (char === EOF) {
+    return
+  }
+
+  currentToken[currentAttribute.name] = currentAttribute.value
+  currentAttribute = {
+    name: '',
+    value: ''
+  }
+
+  return attributeName(char)
+}
 
 // 进入结束标签开始状态
-function endTagOpen (char) {}
+// 遇到字母，进入标签名状态
+// 其他情况，暂不处理
+function endTagOpen (char) {
+  if (char.match(/^[a-zA-Z]$/)) {
+    return tagName(char)
+  }
+
+  if (char === '>') {
+    return
+  }
+
+  if (char === EOF) {
+    return
+  }
+
+  return
+}
 
 module.exports.parseHTML = function (html) {
   let state = data
