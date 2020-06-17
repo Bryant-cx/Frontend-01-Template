@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>range</title>
+</head>
+<body>
+    <div id="box">
+      <span>1</span>
+      <a>2</a>
+      <a>3</a>
+      <span>4</span>
+    </div>
+
+    <script>
+      const box = document.getElementById('box')
+      const range = new Range()
+
+      range.selectNodeContents(box)
+
+      let fragment = range.extractContents()
+      let len = fragment.childNodes.length
+
+      while (len-- > 0) {
+        fragment.appendChild(fragment.childNodes[len])
+      }
+
+      box.appendChild(fragment)
+    </script>
+</body>
+</html>
