@@ -34,4 +34,10 @@ CSSOM
 
   element.getClientRects() 获取元素的位置信息
 
-  
+  element.getBoundingClientRect()
+
+  window.innerWidth
+
+  window.innerHeight
+
+  window.devicePixelRatio
