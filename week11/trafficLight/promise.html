@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>promise</title>
+
+  <style>
+    div {
+      display: inline-block;
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 1px solid #f1f1f5;
+      background: #eee;
+
+      margin: 50px;
+    }
+
+    .green.light {
+      background: green;
+    }
+
+    .yellow.light {
+      background: yellow;
+    }
+
+    .red.light {
+      background: red;
+    }
+  </style>
+</head>
+<body>
+  <div class="green"></div>
+  <div class="yellow"></div>
+  <div class="red"></div>
+
+  <script>
+    function change (light) {
+      const lights = document.getElementsByClassName('light')
+      lights[0] && lights[0].classList.remove('light')
+
+      document.getElementsByClassName(light)[0].classList.add('light')
+    }
+
+    function sleep (time) {
+      return new Promise ((resolve) => {
+        setTimeout(() => {
+          resolve()
+        }, time);
+      })
+    }
+
+    function go () {
+      change ('green')
+
+      sleep (1000)
+        .then(() => {
+          change('yellow')
+
+          return sleep (200)
+        })
+        .then(() => {
+          change('red')
+
+          return sleep (500)
+        })
+        .then(go)
+    }
+  </script>
+</body>
+</html>

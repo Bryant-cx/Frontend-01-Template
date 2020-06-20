@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>findPath</title>
+
+  <style>
+    .cell {
+        display:inline-block;
+        width:6px;
+        height:6px;
+        background-color: gray;
+        border-bottom:solid 1px white;
+        border-right:solid 1px white;
+        vertical-align: middle;
+    }
+    #container{
+        width:701px;
+        font-size: 0;
+    }
+
+    #button {
+      width: 100px;
+      height: 44px;
+      text-align: center;
+      line-height: 44px;
+      color: #fff;
+      background: #12c4d6;
+
+      border-radius: 6px;
+      margin-top: 20px;
+      cursor: pointer;
+    }
+
+    #button:active {
+      transform: scale(.7);
+    }
+  </style>
+</head>
+<body>
+  <div id="container"></div>
+
+  <div id="button">点击保存</div>
+
+  <script>
+    let mouseDown = false
+    let clear = false
+    let dataMap = localStorage.getItem('dataMap') ? JSON.parse(localStorage.getItem('dataMap')) : new Array(10000).fill(0)
+
+    function show () {
+      const fragement = document.createDocumentFragment()
+      for (let i = 0; i < 100; i++) {
+        for (let j = 0; j < 100; j++) {
+          const cell = document.createElement('div')
+          cell.classList.add('cell')
+
+          cell.addEventListener('mouseover', function () {
+            if (mouseDown) {
+              cell.style.background = "black"
+              dataMap[j * 100 + i] = 1
+            }
+
+            if (clear) {
+              cell.style.background = "gray"
+              dataMap[j * 100 + i] = 0
+            }
+          })
+
+          if (dataMap[j * 100 + i] === 1) {
+            cell.style.background = "black"
+          }
+
+          fragement.appendChild(cell)
+        }
+      }
+      document.getElementById('container').appendChild(fragement)
+    }
+
+    // 按下鼠标键
+    document.addEventListener('mousedown', function (e) {
+      // 按下右键，开启橡皮擦功能
+      if (e.which === 3) {
+        clear = true
+      } else {
+        // 按下左键，开启画笔功能
+        mouseDown = true
+      }
+    })
+
+    // 放开鼠标键
+    document.addEventListener('mouseup', function () {
+      mouseDown = false
+      clear = false
+    })
+
+    // 把右键菜单事件禁止掉
+    document.addEventListener('contextmenu', function (e) {
+      e.preventDefault()
+    })
+
+    // 给button增加增加点击事件
+    document.getElementById('button').addEventListener('click', function () {
+      localStorage.setItem('dataMap', JSON.stringify(dataMap))
+    })
+
+    show()
+  </script>
+</body>
+</html>
