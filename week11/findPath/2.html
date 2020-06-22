@@ -121,12 +121,19 @@
       const queue = [start]
       const container = document.getElementById('container')
 
+      container.children[100 * start[0] + start[0]].style.background = 'red'
+      container.children[100 * end[0] + end[1]].style.background = 'red'
+
       while (queue.length) {
-        const point = queue.shift()
+        let point = queue.shift()
 
         console.log(point[0], point[1])
 
         if (point[0] === end[0] && point[1] === end[1]) {
+          while (point[0] !== start[0] && point[1] !== start[1]) {
+            container.children[100 * point[0] + point[1]].style.background = 'pink'
+            point = map[point[1] * 100 + point[0]]
+          }
           return true
         }
 
@@ -134,47 +141,47 @@
         let y = point[1]
 
         // 上
-        await insert(map, x, y - 1)
+        await insert(map, [x, y], x, y - 1)
         // 下
-        await insert(map, x, y + 1)
+        await insert(map, [x, y], x, y + 1)
         // 左
-        await insert(map, x - 1, y)
+        await insert(map, [x, y], x - 1, y)
         // 右
-        await insert(map, x + 1, y)
+        await insert(map, [x, y], x + 1, y)
         // 左上，防止穿墙
         if (!(map[y * 100 + x - 1] === 1 && map[(y + 1) * 100 + x] === 1)) {
-          await insert(map, x - 1, y + 1)
+          await insert(map, [x, y], x - 1, y + 1)
         }
         // 右上，防止穿墙
         if (!(map[y * 100 + x + 1] === 1 && map[(y + 1) * 100 + x] === 1)) {
-          await insert(map, x + 1, y + 1)
+          await insert(map, [x, y], x + 1, y + 1)
         }
         // 左下，防止穿墙
         if (!(map[y * 100 + x - 1] === 1 && map[(y - 1) * 100 + x] === 1)) {
-          await insert(map, x - 1, y - 1)
+          await insert(map, [x, y], x - 1, y - 1)
         }
         // 右下，防止穿墙
         if (!(map[y * 100 + x + 1] === 1 && map[(y - 1) * 100 + x] === 1)) {
-          await insert(map, x + 1, y - 1)
+          await insert(map, [x, y], x + 1, y - 1)
         }
       }
 
-      return false
+      return
 
-      async function insert (map, x, y) {
+      async function insert (map, pre, x, y) {
         // 去掉边界值
         if (x < 0 || y < 0 || x > 99 || y > 99) {
           return
         }
 
         // 防止穿墙，已经遍历过的点，不再重复遍历
-        if (map[y * 100 + x] > 0) {
+        if (map[y * 100 + x] !== 0) {
           return
         }
 
-        map[y * 100 + x] = 2
+        map[y * 100 + x] = pre
 
-        await sleep(5)
+        await sleep(1)
         container.children[100 * x + y].style.background = 'lightgreen'
 
         queue.push([x, y])
