@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>findPath</title>
+  <style>
+    .cell {
+      display:inline-block;
+      width:6px;
+      height:6px;
+      background-color: gray;
+      border-bottom:solid 1px white;
+      border-right:solid 1px white;
+      vertical-align: middle;
+    }
+    #container{
+      width:701px;
+      font-size: 0;
+    }
+
+    #button {
+      width: 100px;
+      height: 44px;
+      text-align: center;
+      line-height: 44px;
+      color: #fff;
+      background: #12c4d6;
+
+      border-radius: 6px;
+      margin-top: 20px;
+      cursor: pointer;
+    }
+
+    #button:active {
+      transform: scale(.7);
+    }
+  </style>
+</head>
+<body>
+  <div id="container"></div>
+  <div id="button">点击保存</div>
+
+  <script>
+    // 鼠标左键是否按下
+    let mouseDown = false
+    // 鼠标右键是否按下
+    let clear = false
+
+    const map = localStorage.map ? JSON.parse(localStorage.getItem('map')) : new Array(10000).fill(0)
+
+    function show () {
+      const container = document.getElementById('container')
+      const fragement = document.createDocumentFragment()
+
+      for (let i = 0; i < 100; i++) {
+        for (let j = 0; j < 100; j++) {
+          const cell = document.createElement('div')
+          cell.classList.add('cell')
+
+          if (map[j * 100 + i] === 1) {
+            cell.style.background = 'black'
+          }
+
+          cell.addEventListener('mouseover', function () {
+            // 如果此时是画笔功能
+            if (mouseDown) {
+              cell.style.background = 'black'
+              map[j * 100 + i] = 1
+            }
+
+            // 如果此时是橡皮擦功能
+            if (clear) {
+              cell.style.background = 'gray'
+              map[j * 100 + i] = 0
+            }
+          })
+
+          fragement.appendChild(cell)
+        }
+      }
+      container.appendChild(fragement)
+    }
+
+    // 监听鼠标键是否按下，开始画图
+    document.addEventListener('mousedown', function (e) {
+      // 鼠标右键按下，开启橡皮擦功能
+      if (e.which === 3) {
+        clear = true
+      } else {
+        // 鼠标左键按下，开启画笔功能
+        mouseDown = true
+      }
+    })
+
+    // 监听鼠标键松开，清除画笔功能和橡皮擦功能
+    document.addEventListener('mouseup', function () {
+      clear = false
+      mouseDown = false
+    })
+
+    // 点击‘保存’，保存画图状态
+    document.getElementById('button').addEventListener('click', function () {
+      localStorage.setItem('map', JSON.stringify(map))
+    })
+
+    // 设置延时
+    function sleep (time) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve()
+        }, time);
+      })
+    }
+
+    // 查找从起点到终点的路径
+    async function findPath (map, start, end) {
+      // 先复制一份地图，防止污染原地图数据
+      map = map.slice()
+
+      const queue = [start]
+      const container = document.getElementById('container')
+
+      while (queue.length) {
+        const point = queue.shift()
+
+        console.log(point[0], point[1])
+
+        if (point[0] === end[0] && point[1] === end[1]) {
+          return true
+        }
+
+        let x = point[0]
+        let y = point[1]
+
+        // 上
+        await insert(map, x, y - 1)
+        // 下
+        await insert(map, x, y + 1)
+        // 左
+        await insert(map, x - 1, y)
+        // 右
+        await insert(map, x + 1, y)
+        // 左上，防止穿墙
+        if (!(map[y * 100 + x - 1] === 1 && map[(y + 1) * 100 + x] === 1)) {
+          await insert(map, x - 1, y + 1)
+        }
+        // 右上，防止穿墙
+        if (!(map[y * 100 + x + 1] === 1 && map[(y + 1) * 100 + x] === 1)) {
+          await insert(map, x + 1, y + 1)
+        }
+        // 左下，防止穿墙
+        if (!(map[y * 100 + x - 1] === 1 && map[(y - 1) * 100 + x] === 1)) {
+          await insert(map, x - 1, y - 1)
+        }
+        // 右下，防止穿墙
+        if (!(map[y * 100 + x + 1] === 1 && map[(y - 1) * 100 + x] === 1)) {
+          await insert(map, x + 1, y - 1)
+        }
+      }
+
+      return false
+
+      async function insert (map, x, y) {
+        // 去掉边界值
+        if (x < 0 || y < 0 || x > 99 || y > 99) {
+          return
+        }
+
+        // 防止穿墙，已经遍历过的点，不再重复遍历
+        if (map[y * 100 + x] > 0) {
+          return
+        }
+
+        map[y * 100 + x] = 2
+
+        await sleep(5)
+        container.children[100 * x + y].style.background = 'lightgreen'
+
+        queue.push([x, y])
+      }
+    }
+
+    show()
+  </script>
+</body>
+</html>
