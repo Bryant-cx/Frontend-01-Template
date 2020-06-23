@@ -131,10 +131,7 @@
           let path = []
           let point
 
-          while ((x !== start[0]) && (y !== start[1])) {
-            if (x === 1 && y === 76) {
-              debugger
-            }
+          while (x !== start[0] || y !== start[1]) {
             path.push([x, y])
             point = map[y * 100 + x]
             x = point[0]
@@ -155,19 +152,19 @@
         await insert([x + 1, y], [x, y])
 
         // 左上，防止穿墙
-        if (!(map[y * 100 + x - 1] !== 0 && map[(y + 1) * 100 + x] !== 0)) {
+        if (!(map[y * 100 + x - 1] === 1 && map[(y + 1) * 100 + x] === 1)) {
           await insert([x - 1, y + 1], [x, y])
         }
         // 左下，防止穿墙
-        if (!(map[y * 100 + x - 1] !== 0 && map[(y - 1) * 100 + x] !== 0)) {
+        if (!(map[y * 100 + x - 1] === 1 && map[(y - 1) * 100 + x] === 1)) {
           await insert([x - 1, y - 1], [x, y])
         }
         // 右上，防止穿墙
-        if (!(map[y * 100 + x + 1] !== 0 && map[(y + 1) * 100 + x] !== 0)) {
+        if (!(map[y * 100 + x + 1] === 1 && map[(y + 1) * 100 + x] === 1)) {
           await insert([x + 1, y + 1], [x, y])
         }
         // 右下，防止穿墙
-        if (!(map[y * 100 + x + 1] !== 0 && map[(y - 1) * 100 + x] !== 0)) {
+        if (!(map[y * 100 + x + 1] === 1 && map[(y - 1) * 100 + x] === 1)) {
           await insert([x + 1, y - 1], [x, y])
         }
       }
