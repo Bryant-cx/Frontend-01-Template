@@ -65,6 +65,41 @@
         if (this.data.length === 0) {
           return
         }
+        let min = this.data[0]
+        let index = 0
+
+        // 将尾结点的值填充到头节点，出堆一个元素
+        this.data[0] = this.data[this.data.length - 1]
+        this.data.pop()
+        let val = this.data[0]
+
+        // 进行shiftdown操作，确保目前仍为最小堆
+        while (index < this.data.length) {
+          // index所处的索引已经是队列末尾
+          if (2 * index + 1 >= this.data.length) {
+            break
+          }
+
+          if (2 * index + 2 >= this.data.length) {
+            index = 2 * index + 1
+          }
+
+          if (this.compare(this.data[2 * index + 1], this.data[2 * index + 2]) < 0) {
+            this.data[index] = this.data[2 * index + 1]
+            this.data[2 * index + 1] = val
+            index = 2 * index + 1
+          } else {
+            this.data[index] = this.data[2 * index + 2]
+            this.data[2 * index + 2] = val
+            index = 2 * index + 2
+          }
+        }
+
+        if (index < this.data.length - 1) {
+          this.insertAt(this.data.pop(), index)
+        }
+
+        return min
       }
 
       insert (val) {
@@ -232,6 +267,11 @@
     })
 
     show()
+
+    const bh = new binaryHeap([], (a, b) => a - b)
+    const arr = [9, 4, 3, 7, 0, 5, 8, 1]
+
+    arr.forEach(i => bh.insert(i))
   </script>
 </body>
 </html>
