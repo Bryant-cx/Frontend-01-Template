@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+<body>
+  <script>
+    const obj = {
+      a: 1,
+      b: 2
+    }
+
+    const handlers = new Map()
+    const reactivities = new Map()
+    const usedReactivities = []
+
+    // 响应式
+    function reactive (obj) {
+      if (reactivities.get(obj)) {
+        return reactivities.get(obj)
+      }
+
+      let proxy = new Proxy(obj, {
+        get (obj, prop) {
+          // 在get的时候收集依赖
+          usedReactivities.push([obj, prop])
+
+          // 对于深层次调用，使用递归处理
+          if (typeof obj[prop] === 'object') {
+            return reactive(obj[prop])
+          }
+          return obj[prop]
+        },
+
+        set (obj, prop, val) {
+          obj[prop] = val
+
+          // set的时候，首先根据obj和prop来筛选依赖
+          if (reactivities.get(obj)) {
+            if (reactivities.get(obj).get(prop)) {
+              for (let handler of reactivities.get(obj).get(prop)) {
+                handler()
+              }
+            }
+          }
+
+          return obj[prop]
+        }
+      })
+
+      return proxy
+    }
+
+    function effect (handler) {
+      handler()
+
+      // 在get的时候收集了依赖，这里对依赖进行处理
+      for (let usedReactivity of usedReactivities) {
+        // get时获取的元素和属性
+        let [obj, prop] = usedReactivity
+
+        if (!reactivities.get(obj)) {
+          reactivities.set(obj, new Map())
+        }
+
+        if (!reactivities.get(obj).get(prop)) {
+          reactivities.get(obj).set(prop, [])
+        }
+
+        // 将回调跟依赖进行绑定
+        reactivities.get(obj).get(prop).push(handler)
+      }
+    }
+
+    let dummy
+    let proxy = reactive(obj)
+    effect(() => dummy = proxy.a)
+    console.log(dummy)
+  </script>
+</body>
+</html>
