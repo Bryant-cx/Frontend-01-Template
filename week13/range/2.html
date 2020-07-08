@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style>
+    #block {
+      width: 100px;
+      height: 100px;
+      background: #12c4d6;
+    }
+  </style>
+</head>
+<body>
+  <div id="block"></div>
+  <script>
+    const block = document.getElementById('block')
+    let baseX = 0
+    let baseY = 0
+
+    document.addEventListener('mousedown', event => {
+      let startX = event.clientX
+      let startY = event.clientY
+
+      let up = event => {
+        baseX = baseX + event.clientX - startX
+        baseY = baseY + event.clientY - startY
+
+        // 防止重复绑定
+        document.removeEventListener('mousemove', move)
+        document.removeEventListener('mouseup', up)
+      }
+
+      let move = event => {
+        let x = baseX + event.clientX - startX
+        let y = baseY + event.clientY - startY
+
+        block.style.transform = `translate(${x}px, ${y}px)`
+      }
+
+      document.addEventListener('mousemove', move)
+      document.addEventListener('mouseup', up)
+    })
+  </script>
+</body>
+</html>
