@@ -5,8 +5,118 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Document</title>
+  <style>
+    #board {
+      width: 100px; height: 100px; margin: 30px; border: 1px solid #eee;
+    }
+  </style>
 </head>
 <body>
-  
+  <!-- <input type="text" id="r" value="200"> -->
+  <input type="range" value=0 min=0 max=255 id="r"><br>
+  <input type="range" value=0 min=0 max=255 id="g"><br>
+  <input type="range" value=0 min=0 max=255 id="b">
+  <div id="board"></div>
+  <script>
+    const obj = {
+      r: 0,
+      g: 0,
+      b: 0
+    }
+
+    // 已经使用过的依赖
+    const usedReactivities = []
+    // 依赖收集
+    const reactivities = new Map()
+
+    // 响应式
+    function reactive (obj) {
+      if (reactivities.get(obj)) {
+        return reactivities.get(obj)
+      }
+
+      // 设置代理，在获取属性时收集依赖，在设置属性时执行代理方法
+      let proxy = new Proxy(obj, {
+        get (obj, prop) {
+          usedReactivities.push([obj, prop])
+
+          // 对于深层次调用，递归处理
+          if (typeof obj[prop] === 'object') {
+            return reactive(obj[prop])
+          }
+          return obj[prop]
+        },
+
+        set (obj, prop, val) {
+          obj[prop] = val
+
+          // 只有obj和属性均与依赖匹配时，才会执行代理方法
+          if (reactivities.get(obj)) {
+            if (reactivities.get(obj).get(prop)) {
+              for (let handler of reactivities.get(obj).get(prop)) {
+                handler()
+              }
+            }
+          }
+
+          return obj[prop]
+        }
+      })
+
+      return proxy
+    }
+
+    function effect (handler) {
+      handler()
+
+      // 遍历收集到的依赖，将依赖与代理方法进行绑定
+      for (let usedReactivity of usedReactivities) {
+        let [obj, prop] = usedReactivity
+
+        if (!reactivities.get(obj)) {
+          reactivities.set(obj, new Map())
+        }
+
+        if (!reactivities.get(obj).get(prop)) {
+          reactivities.get(obj).set(prop, [])
+        }
+
+        reactivities.get(obj).get(prop).push(handler)
+      }
+    }
+
+    let proxy = reactive(obj)
+    let r = document.getElementById('r')
+    let g = document.getElementById('g')
+    let b = document.getElementById('b')
+    let board = document.getElementById('board')
+
+    effect(() => {
+      r.value = proxy.r
+    })
+
+    effect(() => {
+      g.value = proxy.g
+    })
+
+    effect(() => {
+      b.value = proxy.b
+    })
+
+    r.addEventListener('input', event => {
+      proxy.r = event.target.value
+      board.style = `background: rgb(${r.value}, ${g.value}, ${b.value})`
+    })
+
+    g.addEventListener('input', event => {
+      proxy.g = event.target.value
+      board.style = `background: rgb(${r.value}, ${g.value}, ${b.value})`
+    })
+
+    b.addEventListener('input', event => {
+      proxy.b = event.target.value
+      board.style = `background: rgb(${r.value}, ${g.value}, ${b.value})`
+    })
+  </script>
 </body>
 </html>
