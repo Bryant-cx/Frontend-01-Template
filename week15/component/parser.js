@@ -251,6 +251,161 @@ function endTagOpen(c){
     }
 }
 
+// in script
+function scriptData (char) {
+    if (char === '<') {
+        return scriptDataLessThanSign
+    } else {
+        emit({
+            type: 'text',
+            content: char
+        })
+        return scriptData
+    }
+}
+
+// in script received <
+function scriptDataLessThanSign (char) {
+    if (char === '/') {
+        return scriptDataEndTagOpen
+    } else {
+        emit({
+            type: 'text',
+            content: '<'
+        })
+        emit({
+            type: 'text',
+            content: char
+        })
+        return scriptData
+    }
+}
+
+// in script received </
+function scriptDataEndTagOpen (char) {
+    if (char === 's') {
+        return scriptDataEndTagNameS
+    } else {
+        emit({
+            type: 'text',
+            content: '</'
+        })
+        emit({
+            type: 'text',
+            content: char
+        })
+        return scriptData
+    }
+}
+
+// in script received </s
+function scriptDataEndTagNameS (char) {
+    if (char === 'c') {
+        return scriptDataEndTagNameC
+    } else {
+        emit({
+            type: 'text',
+            content: '</s'
+        })
+        emit({
+            type: 'text',
+            content: char
+        })
+        return scriptData
+    }
+}
+
+// in script received </sc
+function scriptDataEndTagNameC (char) {
+    if (char === 'r') {
+        return scriptDataEndTagNameR
+    } else {
+        emit({
+            type: 'text',
+            content: '</sc'
+        })
+        emit({
+            type: 'text',
+            content: char
+        })
+        return scriptData
+    }
+}
+
+// in script received </scr
+function scriptDataEndTagNameR (char) {
+    if (char === 'i') {
+        return scriptDataEndTagNameI
+    } else {
+        emit({
+            type: 'text',
+            content: '</scr'
+        })
+        emit({
+            type: 'text',
+            content: char
+        })
+        return scriptData
+    }
+}
+
+// in script received </scri
+function scriptDataEndTagNameI (char) {
+    if (char === 'p') {
+        return scriptDataEndTagNameP
+    } else {
+        emit({
+            type: 'text',
+            content: '</scri'
+        })
+        emit({
+            type: 'text',
+            content: char
+        })
+        return scriptData
+    }
+}
+
+// in script received </scrip
+function scriptDataEndTagNameP (char) {
+    if (char === 't') {
+        return scriptDataEndTag
+    } else {
+        emit({
+            type: 'text',
+            content: '</scrip'
+        })
+        emit({
+            type: 'text',
+            content: char
+        })
+        return scriptData
+    }
+}
+
+// in script received </script
+function scriptDataEndTag (char) {
+    if (char === ' ') {
+        return scriptDataEndTagNameT
+    } else if (char === '>') {
+        emit({
+            type: 'endTag',
+            tagName: 'script'
+        })
+        return data
+    } else {
+        emit({
+            type: 'text',
+            content: '</script'
+        })
+        emit({
+            type: 'text',
+            content: char
+        })
+        return scriptData
+    }
+}
+
 function afterAttributeName(c) {
     if(c.match(/^[\t\n\f ]$/)) {
         return afterAttributeName;
@@ -278,6 +433,10 @@ module.exports.parseHTML = function parseHTML(html){
     let state = data;
     for(let c of html) {
         state = state(c);
+
+        if (stack[stack.length - 1].tagName === 'script' && state === data) {
+            state = scriptData
+        }
     }
     state = state(EOF);
     return stack[0];

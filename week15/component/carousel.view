@@ -1,9 +1,19 @@
 <template>
-
-</template>
-
-<script>
+  <div class="wrapper"><img /></div>
+</template><script>
 export default {
-  name: 'Carousel'
+  name: 'Carousel',
+
+  data () {
+    return {
+      text: 134
+    }
+  }
+
+  methods: {
+    click () {
+      console.log('<html>')
+    }
+  }
 }
 </script>
