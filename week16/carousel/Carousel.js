@@ -19,6 +19,9 @@ export class Carousel {
   }
 
   render () {
+    // 指针，当前展示图片的索引
+    let position = 0
+
     // 初始化timeLine
     let timeLine = new TimeLine
     // 开始动画
@@ -73,23 +76,69 @@ export class Carousel {
         let preTransform = dx + offset - 500 - 500 * prePosition
         let nextTransform = dx + offset + 500 - 500 * nextPosition
 
+        // 首先关闭动画，防止页面闪动
+        next.style.transition = 'ease 0s'
+
         // 将三张图片都放到它们应该出现的位置
         current.style.transform = `translateX(${ currentTransform }px)`
         pre.style.transform = `translateX(${ preTransform }px)`
         next.style.transform = `translateX(${ nextTransform }px)`
       }
 
-      let element = <img src={url} onStart={onStart} onPan={onPan} enableGesture={true}/>
+      // 拖拽结束后的事件
+      let panEnd = (event) => {
+        // 计算拖拽距离
+        let dx = event.clientX - event.startX
+        // 确定偏移方向，向左拖动的时候，值为-1，向右拖动值为1
+        let direction = 0
+
+        if (dx + offset > 250) {
+          direction = 1
+        } else if (dx + offset < -250) {
+          direction = -1
+        }
+
+        // 确定元素的当前位置
+        let currentTransform = dx + offset - 500 * currentPosition
+        let preTransform = dx + offset - 500 - 500 * prePosition
+        let nextTransform = dx + offset + 500 - 500 * nextPosition
+
+        // 重置动画时间线
+        timeLine.reset()
+        timeLine.start()
+
+        // 当前元素的动画
+        const currentAnimation = new Animation(current.style, 'transform',v => `translateX(${v}px)`,
+         currentTransform, direction * 500 + offset - 500 * currentPosition, 100, 0, ease)
+        // 上一张图片的动画
+        const preAnimation = new Animation(pre.style, 'transform',v => `translateX(${v}px)`,
+         preTransform, direction * 500 + offset - 500 - 500 * prePosition, 100, 0, ease)
+        // 下一张图片的动画
+        const nextAnimation = new Animation(next.style, 'transform', v => `translateX(${v}px)`,
+         nextTransform, direction * 500 + offset + 500 - 500 * nextPosition, 100, 0, ease)
+
+        timeLine.add(currentAnimation)
+        timeLine.add(preAnimation)
+        timeLine.add(nextAnimation)
+
+        // 重新恢复动画
+        position = (currentPosition - direction) % this.data.length
+        console.log(position)
+        timer = setTimeout(() => {
+          nextPic()
+        }, 1000);
+      }
+
+      let element = <img src={url} onStart={onStart} onPan={onPan} onPanEnd={panEnd} enableGesture={true}/>
       element.addEventListener('dragstart', event => event.preventDefault())
+      // 设定一个初始值，防止获取偏移值的时候报错
+      element.style.transform = 'translateX(0px)'
       return element
     })
 
     let root = <div class="carousel" >
       { children }
     </div>
-
-    // 指针，当前展示图片的索引
-    let position = 0
 
     // 下一张要展示的图片
     let nextPic = () => {
