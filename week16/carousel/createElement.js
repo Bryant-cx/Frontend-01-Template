@@ -1,4 +1,4 @@
-import { enableGesture } from './gesture/gesture.js'
+import { enableGesture } from './gesture.js'
 
 export function create (Cls, attributes, ...children) {
   let o
@@ -57,14 +57,15 @@ export class Wrapper {
     this.root.setAttribute(name, value)
 
     // 由于enableGesture只对真实dom节点有效，所以我们让它作用于根节点
-    if (name === 'enanbleGesture') {
+    if (name === 'enableGesture') {
       enableGesture(this.root)
     }
 
     // 处理on事件
     if (name.match(/^on([\s\S]+)$/)) {
-      let event = RegExp.$1
-      console.log(event)
+      let eventName = RegExp.$1.replace(/^[\s\S]/, c => c.toLowerCase())
+      
+      this.addEventListener(eventName, value)
     }
   }
 
