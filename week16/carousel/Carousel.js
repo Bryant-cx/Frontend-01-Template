@@ -19,9 +19,6 @@ export class Carousel {
   }
 
   render () {
-    // 指针，当前展示图片的索引
-    let position = 0
-
     // 初始化timeLine
     let timeLine = new TimeLine
     // 开始动画
@@ -30,7 +27,7 @@ export class Carousel {
     // 保存定时器指针
     let timer = null
 
-    let children = this.data.map((url) => {
+    let children = this.data.map((url, currentPosition) => {
       // 指针，上一张图片的索引
       let prePosition
       // 指针，下一张图片的索引
@@ -50,32 +47,33 @@ export class Carousel {
         timeLine.pause()
         clearTimeout(timer)
 
-        prePosition = (position - 1 + this.data.length) % this.data.length
-        nextPosition = (position + 1) % this.data.length
+        prePosition = (currentPosition - 1 + this.data.length) % this.data.length
+        nextPosition = (currentPosition + 1) % this.data.length
 
         // 确定拖拽的三张图片
-        current = children[position]
+        current = children[currentPosition]
         pre = children[prePosition]
         next = children[nextPosition]
+
+        // 首先关闭动画，防止页面闪动
+        next.style.transition = 'ease 0s'
 
         // 当前变换值
         let currentTransformValue = Number(current.style.transform.match(/translateX\(([\s\S]+)px\)/)[1])
 
         // 确定偏移量
-        offset = currentTransformValue + 500 * position
+        offset = currentTransformValue + 500 * currentPosition
       }
 
       // pan事件
       let onPan = (event) => {
         // 鼠标拖拽的距离
         let dx = event.clientX - event.startX
-        let currentTransform = dx + offset - 500 * position
+        let currentTransform = dx + offset - 500 * currentPosition
         let preTransform = dx + offset - 500 - 500 * prePosition
         let nextTransform = dx + offset + 500 - 500 * nextPosition
 
-        // 首先关闭动画，防止页面闪动
-        next.style.transition = 'ease 0s'
-
+        // 将三张图片都放到它们应该出现的位置
         current.style.transform = `translateX(${ currentTransform }px)`
         pre.style.transform = `translateX(${ preTransform }px)`
         next.style.transform = `translateX(${ nextTransform }px)`
@@ -89,6 +87,9 @@ export class Carousel {
     let root = <div class="carousel" >
       { children }
     </div>
+
+    // 指针，当前展示图片的索引
+    let position = 0
 
     // 下一张要展示的图片
     let nextPic = () => {
