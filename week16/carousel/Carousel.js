@@ -72,9 +72,11 @@ export class Carousel {
       let onPan = (event) => {
         // 鼠标拖拽的距离
         let dx = event.clientX - event.startX
-        let currentTransform = dx + offset - 500 * currentPosition
-        let preTransform = dx + offset - 500 - 500 * prePosition
-        let nextTransform = dx + offset + 500 - 500 * nextPosition
+        // 偏移量
+        let offsetValue = dx + offset
+        let currentTransform = offsetValue - 500 * currentPosition
+        let preTransform = offsetValue - 500 - 500 * prePosition
+        let nextTransform = offsetValue + 500 - 500 * nextPosition
 
         // 首先关闭动画，防止页面闪动
         next.style.transition = 'ease 0s'
@@ -109,20 +111,20 @@ export class Carousel {
 
         // 当前元素的动画
         const currentAnimation = new Animation(current.style, 'transform',v => `translateX(${v}px)`,
-         currentTransform, direction * 500 + offset - 500 * currentPosition, 100, 0, ease)
+         currentTransform, direction * 500 - 500 * currentPosition, 100, 0, ease)
         // 上一张图片的动画
         const preAnimation = new Animation(pre.style, 'transform',v => `translateX(${v}px)`,
-         preTransform, direction * 500 + offset - 500 - 500 * prePosition, 100, 0, ease)
+         preTransform, direction * 500 - 500 - 500 * prePosition, 100, 0, ease)
         // 下一张图片的动画
         const nextAnimation = new Animation(next.style, 'transform', v => `translateX(${v}px)`,
-         nextTransform, direction * 500 + offset + 500 - 500 * nextPosition, 100, 0, ease)
+         nextTransform, direction * 500 + 500 - 500 * nextPosition, 100, 0, ease)
 
         timeLine.add(currentAnimation)
         timeLine.add(preAnimation)
         timeLine.add(nextAnimation)
 
         // 重新恢复动画
-        position = (currentPosition - direction) % this.data.length
+        position = (currentPosition - direction + this.data.length) % this.data.length
         console.log(position)
         timer = setTimeout(() => {
           nextPic()
