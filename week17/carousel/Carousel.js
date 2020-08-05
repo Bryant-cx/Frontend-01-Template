@@ -2,6 +2,12 @@ import { create, Wrapper, Text } from './createElement.js'
 import { ease, linear } from './cubicBezier'
 import { TimeLine, Animation } from './animation'
 
+import css from './carousel.css'
+// console.log(css)
+// let style = document.createElement('style')
+// style.innerText = css[0][1]
+// document.documentElement.appendChild(style)
+
 export class Carousel {
   constructor (config) {
     this.children = []
